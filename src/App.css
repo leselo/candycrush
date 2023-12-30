@@ -1,0 +1,40 @@
+@import url("https://fonts.cdnfonts.com/css/seven-segment");
+@import url("https://fonts.googleapis.com/css?family=Open+Sans&display=swap");
+
+.App {
+	display: flex;
+	padding: 30px;
+}
+
+.scoreboard {
+	display: flex;
+	width: 96%;
+	padding: 5px;
+	border: 0px solid blue;
+}
+.scoreboards {
+	width: 60%;
+	font-family: monospace;
+	font-size: 3em;
+	border: 0px solid red;
+}
+.spacer {
+	width: 3%;
+}
+
+.scoreboardres {
+	font-family: "seven segment", sans-serif;
+	font-size: 3em;
+	font-style: italic;
+	font-weight: unset;
+	color: red;
+	border: 0px solid black;
+	width: 40%;
+	text-align: right;
+	margin: auto;
+}
+
+.game {
+	display: flex;
+	flex-wrap: wrap;
+}
