@@ -61,10 +61,10 @@ export default function App() {
 			} else if (n === 123 || n === 124 || n === 125) {
 				boardColors.push(candyColors[2]);
 			} else { */
-				boardColors.push(
-					candyColors[Math.floor(Math.random() * candyColors.length)]
-				);
-			}
+			boardColors.push(
+				candyColors[Math.floor(Math.random() * candyColors.length)]
+			);
+			//}
 		}
 		setCurrentColorArrangement(boardColors);
 	};
