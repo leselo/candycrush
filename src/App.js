@@ -7,6 +7,7 @@ import purpleCandy from "./images/purple-candy.png";
 import redCandy from "./images/red-candy.png";
 import yellowCandy from "./images/yellow-candy.png";
 import blank from "./images/blank.png";
+import { useLockedBody } from "usehooks-ts";
 
 const candyColors = [
 	blueCandy,
@@ -17,17 +18,12 @@ const candyColors = [
 	greenCandy,
 ];
 
-const gameArea = 360;
-const width = 8;
-const height = 8;
-const imgWidth = gameArea / width;
-const imgHeight = gameArea / height;
+const numberOfCandiesPerRow = 8;
 const minCellsToMatch = 3;
 const emptyCellColor = blank;
-const draggedImgWidth = imgWidth * 2;
-const draggedImgHeight = imgHeight * 2;
 
 export default function App() {
+	const [gameArea, setGameArea] = useState(360);
 	const [currentColorArrangement, setCurrentColorArrangement] = useState([]);
 	const [cellsToMatch, setCellsToMatch] = useState(minCellsToMatch);
 	const [cellBeingDragged, setCellBeingDragged] = useState();
@@ -41,6 +37,21 @@ export default function App() {
 	const [imgBeingDragged, setImgBeingDragged] = useState(blank);
 	const [imgPosition, setImgPosition] = useState({ x: 0, y: 0 });
 	const [imgHidden, setImgHidden] = useState("");
+	const [locked, setLocked] = useLockedBody(false, "root");
+	const [deltaX, setDeltaX] = useState(0);
+	const [deltaY, setDeltaY] = useState(0);
+	const width = numberOfCandiesPerRow;
+	const height = numberOfCandiesPerRow;
+	const imgWidth = gameArea / width;
+	const imgHeight = gameArea / height;
+	const draggedImgWidth = imgWidth * 2;
+	const draggedImgHeight = imgHeight * 2;
+
+	const [movedID, setMovedID] = useState(0);
+
+	const toggleLocked = () => {
+		setLocked(!locked);
+	};
 
 	const createBoard = () => {
 		const boardColors = [];
@@ -441,25 +452,23 @@ export default function App() {
 	};
 
 	const handleTouchStart = (e) => {
-		var touchPositionX = Math.floor(
-			(Math.floor(e.touches[0].clientX - gameX) + imgHeight) / imgHeight - 1
-		);
-		var touchPositionY = Math.floor(
-			(Math.floor(e.touches[0].clientY - gameY) + imgWidth) / imgWidth - 1
-		);
+		var touchedImageX = document
+			.getElementById(e.target.id)
+			.getBoundingClientRect().x;
+		var touchedImageY = document
+			.getElementById(e.target.id)
+			.getBoundingClientRect().y;
 
-		var posX =
-			touchPositionX * imgWidth + gameX - (draggedImgHeight - imgHeight) / 2;
-		var posY =
-			touchPositionY * imgWidth + gameY - (draggedImgWidth - imgWidth) / 2;
+		setDeltaX(Math.floor(Math.floor(e.touches[0].clientX)) - touchedImageX);
+		setDeltaY(Math.floor(Math.floor(e.touches[0].clientY)) - touchedImageY);
+
+		var posX = touchedImageX - imgWidth / 2;
+		var posY = touchedImageY - imgHeight / 2;
 
 		setImgPosition({
 			x: posX,
 			y: posY,
 		});
-		console.log(touchPositionX, ":", touchPositionY);
-		console.log("imgWidth:", imgWidth, " gameY:", gameY);
-		console.log("e.touches[0].clientY:", e.touches[0].clientY);
 
 		setImgHidden("");
 		setImgBeingDragged(e.target.src);
@@ -468,36 +477,42 @@ export default function App() {
 		//setItems((prevItems) => prevItems.map((item, i) => (i === index ? { ...item, touchStart: touch.clientX } : item)));
 	};
 	const handleTouchMove = (e) => {
-		var touchPositionX = Math.floor(
-			(Math.floor(e.touches[0].clientX) + imgHeight) / imgHeight - 1
-		);
-		var touchPositionY = Math.floor(
-			(Math.floor(e.touches[0].clientY) + imgWidth) / imgWidth - 1
-		);
+		const touchPositionX = e.touches[0].clientX - gameX;
+		const touchPositionY = e.touches[0].clientY - gameY;
+
+		var numberInCol = Math.floor(touchPositionX / imgWidth);
+		if (numberInCol === touchPositionX / imgWidth)
+			numberInCol = numberInCol - 1;
+
+		var numberInRow = Math.floor(touchPositionY / imgHeight);
+		if (numberInRow === touchPositionY / imgHeight)
+			numberInRow = numberInRow - 1;
+
+		var movedImageId = numberInRow * numberOfCandiesPerRow + numberInCol;
 
 		if (
-			touchPositionY >= 0 &&
-			touchPositionY <= width - 1 &&
-			touchPositionX >= 0 &&
-			touchPositionX <= height - 1
+			numberInCol >= 0 &&
+			numberInCol <= width - 1 &&
+			numberInRow >= 0 &&
+			numberInRow <= height - 1
 		) {
-			const touch = e.touches[0];
+			setMovedID(movedImageId);
+			var movedImageX = document
+				.getElementById(movedImageId)
+				.getBoundingClientRect().x;
+			var movedImageY = document
+				.getElementById(movedImageId)
+				.getBoundingClientRect().y;
 
-			var posX =
-				touchPositionX * imgWidth + gameX - (draggedImgHeight - imgHeight) / 2;
-			var posY =
-				touchPositionY * imgWidth + gameY - (draggedImgWidth - imgWidth) / 2;
+			var posX = movedImageX - imgWidth / 2;
+			var posY = movedImageY - imgHeight / 2;
 
 			setImgPosition({
 				x: posX,
 				y: posY,
 			});
-			console.log(touch.clientX, ":", touch.clientY);
-			console.log(posX, ":", posY);
 
-			setCellBeingReplaced(
-				document.getElementById(touchPositionY * 8 + touchPositionX)
-			);
+			setCellBeingReplaced(document.getElementById(movedImageId));
 		}
 	};
 
@@ -509,12 +524,24 @@ export default function App() {
 		setImgHidden("true");
 	};
 	useEffect(() => {
+		toggleLocked();
 		createBoard();
+		window.addEventListener("resize", function (event) {
+			getScreenOrientation();
+		});
+
+		var screenWidth = Math.floor(
+			(window.innerWidth - 4) / numberOfCandiesPerRow
+		);
+		setGameArea(screenWidth * numberOfCandiesPerRow);
+
 		const gameDiv = document.getElementById("game");
-		gameDiv.style.width = "360px";
+		gameDiv.style.width = gameArea;
 		setGameX(gameDiv.getBoundingClientRect().x);
 		setGameY(gameDiv.getBoundingClientRect().y);
-		//console.log(gameY);
+		return () => {
+			window.removeEventListener("resize", function (event) {});
+		};
 	}, []);
 
 	useEffect(() => {
@@ -540,6 +567,10 @@ export default function App() {
 		//return () => clearInterval(timer);
 	}, [keepSearching]);
 	//console.log(currentColorArrangement);
+
+	function getScreenOrientation() {
+		window.location.reload(false);
+	}
 
 	return (
 		<div className="app">
@@ -582,9 +613,7 @@ export default function App() {
 					<div className="spacer"></div>
 					<div className="scoreboards">Solutions:</div>
 
-					<div className="scoreboardres">
-						{totalSolutions === 0 ? "-" : totalSolutions}
-					</div>
+					<div className="scoreboardres">{window.screen.orientation.angle}</div>
 					<div className="spacer"></div>
 				</div>
 
