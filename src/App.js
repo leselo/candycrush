@@ -609,13 +609,6 @@ export default function App() {
 					alt={imgBeingDragged}
 					hidden={imgHidden}
 				/>
-				<div style={{ visibility: "hidden" }} className="scoreboard">
-					<div className="spacer"></div>
-					<div className="scoreboards">Solutions:</div>
-
-					<div className="scoreboardres">{window.screen.orientation.angle}</div>
-					<div className="spacer"></div>
-				</div>
 
 				<div className="scoreboard">
 					<div className="spacer"></div>
