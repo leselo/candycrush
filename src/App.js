@@ -56,11 +56,11 @@ export default function App() {
 	const createBoard = () => {
 		const boardColors = [];
 		for (let n = 0; n < width * height; n++) {
-			if (n === 56 || n === 57 || n === 59 || n === 60 || n === 50) {
+			/* if (n === 56 || n === 57 || n === 59 || n === 60 || n === 50) {
 				boardColors.push(candyColors[3]);
 			} else if (n === 123 || n === 124 || n === 125) {
 				boardColors.push(candyColors[2]);
-			} else {
+			} else { */
 				boardColors.push(
 					candyColors[Math.floor(Math.random() * candyColors.length)]
 				);
