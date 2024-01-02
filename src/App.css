@@ -19,9 +19,9 @@
 	border: 0px solid blue;
 }
 .scoreboards {
-	width: 60%;
+	width: 90%;
 	font-family: monospace;
-	font-size: 3em;
+	font-size: 1.5em;
 	border: 0px solid red;
 }
 .spacer {
@@ -30,7 +30,7 @@
 
 .scoreboardres {
 	font-family: "seven segment", sans-serif;
-	font-size: 3em;
+	font-size: 2em;
 	font-style: italic;
 	font-weight: unset;
 	color: red;
@@ -41,5 +41,44 @@
 }
 
 .game {
-	background: inherit;
+	position: relative;
+}
+
+.graycover {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background: gray;
+	opacity: 0.5;
+	z-index: 80;
+	transition: opacity 2s;
+}
+
+.dialog {
+	display: block;
+	position: absolute;
+	background: red;
+	width: 70%;
+	padding: 10px;
+	top: 20%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	text-align: center;
+	z-index: 99;
+	font-size: 2em;
+	opacity: 1;
+	transition: opacity 2s;
+}
+.nextlevel {
+	top: 40%;
+	z-index: 99;
+}
+
+#hideelement {
+	opacity: 0;
+	width: 0%;
+	visibility: hidden;
+}
+.dialog:hover {
+	cursor: pointer;
 }

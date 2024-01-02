@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import blueCandy from "./images/blue-candy.png";
 import greenCandy from "./images/green-candy.png";
@@ -8,6 +8,7 @@ import redCandy from "./images/red-candy.png";
 import yellowCandy from "./images/yellow-candy.png";
 import blank from "./images/blank.png";
 import { useLockedBody } from "usehooks-ts";
+import { useLockBodyScroll } from "@uidotdev/usehooks";
 
 const candyColors = [
 	blueCandy,
@@ -18,19 +19,34 @@ const candyColors = [
 	greenCandy,
 ];
 
-const numberOfCandiesPerRow = 8;
+const candiesPerRow = 4;
 const minCellsToMatch = 3;
 const emptyCellColor = blank;
 
 export default function App() {
+	useLockBodyScroll();
+	var numberOfCandiesPerRowLoad = parseInt(
+		localStorage.getItem("numberOfCandiesPerRow") || candiesPerRow
+	);
+
+	var totalMovesLoad = parseInt(localStorage.getItem("totalMoves", 0));
+	var totalScoreLoad = parseInt(localStorage.getItem("totalScore", 0));
+
+	const [numberOfCandiesPerRow, setNumberOfCandiesPerRow] = useState(
+		numberOfCandiesPerRowLoad
+	);
+	//console.log("numberOfCandiesPerRowLoad", numberOfCandiesPerRowLoad);
+
+	const [txtTemp, setTxtTemp] = useState("-");
+	const numberOfElementsPerRow = useRef(candiesPerRow);
 	const [gameArea, setGameArea] = useState(360);
 	const [currentColorArrangement, setCurrentColorArrangement] = useState([]);
 	const [cellsToMatch, setCellsToMatch] = useState(minCellsToMatch);
 	const [cellBeingDragged, setCellBeingDragged] = useState();
 	const [cellBeingReplaced, setCellBeingReplaced] = useState();
-	const [totalSolutions, setTotalSolutions] = useState(0);
-	const [totalMoves, setTotalMoves] = useState(0);
-	const [totalScore, setTotalScore] = useState(0);
+	const [totalSolutions, setTotalSolutions] = useState(73);
+	const [totalMoves, setTotalMoves] = useState(totalMovesLoad);
+	const [totalScore, setTotalScore] = useState(totalScoreLoad);
 	const [keepSearching, setKeepSearching] = useState(false);
 	const [gameX, setGameX] = useState(0);
 	const [gameY, setGameY] = useState(0);
@@ -40,13 +56,15 @@ export default function App() {
 	const [locked, setLocked] = useLockedBody(false, "root");
 	const [deltaX, setDeltaX] = useState(0);
 	const [deltaY, setDeltaY] = useState(0);
-	const width = numberOfCandiesPerRow;
-	const height = numberOfCandiesPerRow;
-	const imgWidth = gameArea / width;
-	const imgHeight = gameArea / height;
-	const draggedImgWidth = imgWidth * 2;
-	const draggedImgHeight = imgHeight * 2;
 
+	const [width, setWidth] = useState(numberOfCandiesPerRow);
+	const [height, setHeight] = useState(numberOfCandiesPerRow);
+	const [imgWidth, setImgWidth] = useState(gameArea / width);
+	const [imgHeight, setImgHeight] = useState(gameArea / height);
+	const [draggedImgWidth, setDraggedImgWidth] = useState(imgWidth * 2);
+	const [draggedImgHeight, setDraggedImgHeight] = useState(imgHeight * 2);
+	const [isVisible, setIsVisible] = useState(false);
+	const threeValues = [];
 	const [movedID, setMovedID] = useState(0);
 
 	const toggleLocked = () => {
@@ -54,6 +72,24 @@ export default function App() {
 	};
 
 	const createBoard = () => {
+		var screenWidth = Math.floor(
+			(window.innerWidth - 4) / numberOfCandiesPerRow
+		);
+		setGameArea(screenWidth * numberOfCandiesPerRow); //
+
+		const gameDiv = document.getElementById("game");
+		gameDiv.style.width = gameArea;
+		setGameX(gameDiv.getBoundingClientRect().x);
+		setGameY(gameDiv.getBoundingClientRect().y);
+
+		setImgWidth(gameArea / width);
+		setImgHeight(gameArea / height);
+		setDraggedImgWidth(imgWidth * 2);
+		setDraggedImgHeight(imgHeight * 2);
+
+		//setTxtTemp(totalScoreLoad);
+		//setTxtTemp(imgWidth + ":" + gameArea + ":" + window.innerWidth + ":");
+
 		const boardColors = [];
 		for (let n = 0; n < width * height; n++) {
 			/* if (n === 56 || n === 57 || n === 59 || n === 60 || n === 50) {
@@ -153,9 +189,10 @@ export default function App() {
 		return retValue;
 	};
 
-	const findSoulutions = () => {
+	const findSoulutions = (showThem) => {
 		var rightEdge = 0;
-		const threeValues = [];
+		var leftEdge = 0;
+
 		var debugShowHorizontal = true;
 		var debugShowVertical = true;
 		var isDirty = false;
@@ -167,6 +204,8 @@ export default function App() {
 
 			const candyColorToMatch = currentColorArrangement[cellID];
 			if (cellID % width === 0) rightEdge = cellID + width - 1;
+			leftEdge = rightEdge - width + 1;
+			//console.log(leftEdge, "rightEdge", rightEdge);
 
 			if (
 				debugShowHorizontal &&
@@ -181,94 +220,100 @@ export default function App() {
 					if (
 						// right and up
 						cellID < rightEdge - 1 &&
+						cellID >= leftEdge &&
 						currentColorArrangement[cellID + 2 - height] === candyColorToMatch
 					) {
 						threeValues.push(cellID, cellID + 1, cellID + 2 - height);
 						isDirty = true;
-						setTotalSolutions(solutions++);
-						//console.log("1:", cellID, cellID + 1, cellID + 2 - height);
+						solutions++;
+						console.log("1:", cellID, cellID + 1, cellID + 2 - height);
 					}
 					if (
 						// right and down
 						cellID < rightEdge - 1 &&
+						cellID >= leftEdge &&
 						currentColorArrangement[cellID + 2 + height] === candyColorToMatch
 					) {
 						threeValues.push(cellID, cellID + 1, cellID + 2 + height);
 						isDirty = true;
-						setTotalSolutions(solutions++);
-						//console.log("2:", cellID, cellID + 1, cellID + 2 + height);
+						solutions++;
+						console.log("2:", cellID, cellID + 1, cellID + 2 + height);
 					}
 					if (
 						// right and middle
 						currentColorArrangement[cellID + 3] === candyColorToMatch &&
-						cellID < rightEdge - 2
+						cellID < rightEdge - 2 &&
+						cellID >= leftEdge
 					) {
 						threeValues.push(cellID, cellID + 1, cellID + 3);
 						isDirty = true;
-						setTotalSolutions(solutions++);
-						//console.log("3:", cellID, cellID + 1, cellID + 3);
+						solutions++;
+						console.log("3:", cellID, cellID + 1, cellID + 3);
 					}
 					if (
 						//left and up
 						cellID < rightEdge &&
-						cellID > rightEdge - 6 &&
+						cellID > leftEdge &&
 						currentColorArrangement[cellID - 1 - height] === candyColorToMatch
 					) {
 						threeValues.push(cellID, cellID + 1, cellID - 1 - height);
 						isDirty = true;
-						setTotalSolutions(solutions++);
-						//console.log("4:", cellID, cellID + 1, cellID - 1 - height);
+						solutions++;
+						console.log("4:", cellID, cellID + 1, cellID - 1 - height);
 					}
 					if (
 						//left and down
-						cellID > rightEdge - 6 &&
+						cellID > leftEdge &&
 						cellID < rightEdge &&
 						currentColorArrangement[cellID - 1 + height] === candyColorToMatch
 					) {
 						threeValues.push(cellID, cellID + 1, cellID - 1 + height);
 						isDirty = true;
-						setTotalSolutions(solutions++);
-						//console.log("5:", cellID, cellID + 1, cellID - 1 + height);
+						solutions++;
+						console.log("5:", cellID, cellID + 1, cellID - 1 + height);
 					}
 					if (
 						//left and middle
-						cellID > rightEdge - 6 &&
+						cellID > leftEdge + 1 &&
 						cellID < rightEdge &&
 						currentColorArrangement[cellID - 2] === candyColorToMatch
 					) {
 						threeValues.push(cellID, cellID + 1, cellID - 2);
 						isDirty = true;
-						setTotalSolutions(solutions++);
-						//console.log("6:", cellID, cellID + 1, cellID - 2);
+						solutions++;
+						console.log("6:", cellID, cellID + 1, cellID - 2);
 					}
 				}
 			}
 			if (
+				//Horizontal middle above or under
 				debugShowHorizontal &&
-				cellID >= rightEdge - width - 1 &&
-				cellID + 2 <= rightEdge &&
+				cellID >= leftEdge &&
+				cellID < rightEdge - 1 &&
 				currentColorArrangement[cellID + 2] === candyColorToMatch &&
 				currentColorArrangement[cellID] === candyColorToMatch &&
 				// eslint-disable-next-line eqeqeq
 				currentColorArrangement[cellID] != emptyCellColor
 			) {
 				if (
+					//above
 					cellID + 1 - height > 0 &&
 					currentColorArrangement[cellID + 1 - height] === candyColorToMatch
 				) {
 					threeValues.push(cellID, cellID + 2, cellID + 1 - height);
 					isDirty = true;
-					setTotalSolutions(solutions++);
-					//console.log("7:", cellID, cellID + 2, cellID + 1 - height);
+					solutions++;
+					console.log("7:", cellID, cellID + 2, cellID + 1 - height);
 				}
 				if (
+					//under
 					cellID + 1 + height < currentColorArrangement.length &&
 					currentColorArrangement[cellID + 1 + height] === candyColorToMatch
 				) {
 					threeValues.push(cellID, cellID + 2, cellID + 1 + height);
 					isDirty = true;
-					setTotalSolutions(solutions++);
-					//console.log("8:", cellID, cellID + 2, cellID + 1 + height);
+					solutions++;
+					console.log("8:", cellID, cellID + 2, cellID + 1 + height);
 				}
 			}
 
@@ -276,55 +321,73 @@ export default function App() {
 			if (
 				debugShowVertical &&
 				currentColorArrangement[cellID] === candyColorToMatch &&
-				currentColorArrangement[cellID - height] === candyColorToMatch
+				currentColorArrangement[cellID + height] === candyColorToMatch
 			) {
 				if (
-					cellID > rightEdge - (width - 1) &&
+					//top and left
+					cellID > leftEdge &&
 					cellID <= rightEdge &&
-					currentColorArrangement[cellID - height * 2 - 1] === candyColorToMatch
+					currentColorArrangement[cellID - height - 1] === candyColorToMatch
 				) {
-					threeValues.push(cellID, cellID - height, cellID - height * 2 - 1);
+					threeValues.push(cellID, cellID + height, cellID - height - 1);
 					isDirty = true;
-					setTotalSolutions(solutions++);
+					solutions++;
+					console.log("9:", cellID, cellID + height, cellID - height - 1);
 				}
 				if (
-					currentColorArrangement[cellID - height * 3] === candyColorToMatch
-				) {
-					threeValues.push(cellID, cellID - height, cellID - height * 3);
-					isDirty = true;
-					setTotalSolutions(solutions++);
-				}
-				if (
+					// Top and right
+					cellID >= leftEdge &&
 					cellID < rightEdge &&
-					currentColorArrangement[cellID - height * 2 + 1] === candyColorToMatch
+					currentColorArrangement[cellID - height + 1] === candyColorToMatch
 				) {
-					threeValues.push(cellID, cellID - height, cellID - height * 2 + 1);
+					threeValues.push(cellID, cellID + height, cellID - height + 1);
 					isDirty = true;
-					setTotalSolutions(solutions++);
+					solutions++;
+					console.log("10:", cellID, cellID + height, cellID - height + 1);
 				}
 				if (
-					cellID > rightEdge - (width - 1) &&
+					// Top and middle
+					cellID >= leftEdge &&
 					cellID <= rightEdge &&
-					currentColorArrangement[cellID + height - 1] === candyColorToMatch
+					currentColorArrangement[cellID - height * 2] === candyColorToMatch
 				) {
-					threeValues.push(cellID, cellID - height, cellID + height - 1);
+					threeValues.push(cellID, cellID + height, cellID - height * 2);
 					isDirty = true;
-					setTotalSolutions(solutions++);
+					solutions++;
+					console.log("11:", cellID, cellID + height, cellID - height * 2);
 				}
 				if (
-					currentColorArrangement[cellID + height * 2] === candyColorToMatch
+					// bottom and left
+					cellID > leftEdge &&
+					cellID <= rightEdge &&
+					currentColorArrangement[cellID + height * 2 - 1] === candyColorToMatch
 				) {
-					threeValues.push(cellID, cellID - height, cellID + height * 2);
+					threeValues.push(cellID, cellID + height, cellID + height * 2 - 1);
 					isDirty = true;
-					setTotalSolutions(solutions++);
+					solutions++;
+					console.log("12:", cellID, cellID + height, cellID + height * 2 - 1);
 				}
 				if (
+					// bottom and right
+					cellID >= leftEdge &&
 					cellID < rightEdge &&
-					currentColorArrangement[cellID + height + 1] === candyColorToMatch
+					currentColorArrangement[cellID + height * 2 + 1] === candyColorToMatch
 				) {
-					threeValues.push(cellID, cellID - height, cellID + height + 1);
+					threeValues.push(cellID, cellID + height, cellID + height * 2 + 1);
 					isDirty = true;
-					setTotalSolutions(solutions++);
+					solutions++;
+					console.log("13:", cellID, cellID + height, cellID + height * 2 + 1);
+				}
+				if (
+					// bottom and middle
+					cellID >= leftEdge &&
+					cellID <= rightEdge &&
+					currentColorArrangement[cellID + height * 3] === candyColorToMatch
+				) {
+					threeValues.push(cellID, cellID + height, cellID + height * 3);
+					isDirty = true;
+					solutions++;
+					console.log("14:", cellID, cellID + height, cellID + height * 3);
 				}
 			}
 
@@ -332,32 +395,42 @@ export default function App() {
 			if (
 				debugShowVertical &&
 				currentColorArrangement[cellID] === candyColorToMatch &&
-				currentColorArrangement[cellID - height * 2] === candyColorToMatch
+				currentColorArrangement[cellID + height * 2] === candyColorToMatch
 			) {
 				if (
-					cellID > rightEdge - (width - 1) &&
-					currentColorArrangement[cellID - height - 1] === candyColorToMatch
+					//middle and left
+					cellID > leftEdge &&
+					cellID <= rightEdge &&
+					currentColorArrangement[cellID + height - 1] === candyColorToMatch
 				) {
-					threeValues.push(cellID, cellID - height * 2, cellID - height - 1);
+					threeValues.push(cellID, cellID + height * 2, cellID + height - 1);
 					isDirty = true;
-					setTotalSolutions(solutions++);
+					solutions++;
+					console.log("15:", cellID, cellID + height * 2, cellID + height - 1);
 				}
 				if (
+					//middle and right
+					cellID >= leftEdge &&
 					cellID < rightEdge &&
-					currentColorArrangement[cellID - height + 1] === candyColorToMatch
+					currentColorArrangement[cellID + height + 1] === candyColorToMatch
 				) {
-					threeValues.push(cellID, cellID - height * 2, cellID - height + 1);
+					threeValues.push(cellID, cellID + height * 2, cellID + height + 1);
 					isDirty = true;
-					setTotalSolutions(solutions++);
+					solutions++;
+					console.log("16:", cellID, cellID + height * 2, cellID + height + 1);
 				}
 			}
 
 			threeValues.map((cellIDValue) => {
-				document.getElementById(cellIDValue).style.opacity = 0.4;
+				if (showThem) document.getElementById(cellIDValue).style.opacity = 0.4;
 				//document.getElementById(cellIDValue).style.background = "lightyellow";
 				return true;
 			});
 		}
+
+		//console.log("solutions:" + solutions);
+
+		setTotalSolutions(solutions);
 		return isDirty;
 	};
 
@@ -378,8 +451,8 @@ export default function App() {
 					currentColorArrangement[cellID];
 				currentColorArrangement[cellID] = emptyCellColor;
 				setKeepSearching(!keepSearching);
-				//setTotalScore(totalScore + 1);
-				console.log("Done...!");
+
+				console.log("Done...!", totalSolutions);
 			}
 			//
 			if (
@@ -452,6 +525,7 @@ export default function App() {
 	};
 
 	const handleTouchStart = (e) => {
+		e.preventDefault();
 		var touchedImageX = document
 			.getElementById(e.target.id)
 			.getBoundingClientRect().x;
@@ -477,6 +551,7 @@ export default function App() {
 		//setItems((prevItems) => prevItems.map((item, i) => (i === index ? { ...item, touchStart: touch.clientX } : item)));
 	};
 	const handleTouchMove = (e) => {
+		e.preventDefault();
 		const touchPositionX = e.touches[0].clientX - gameX;
 		const touchPositionY = e.touches[0].clientY - gameY;
 
@@ -516,33 +591,78 @@ export default function App() {
 		}
 	};
 
-	const handleTouchEnd = () => {
+	const handleTouchEnd = (e) => {
+		e.preventDefault();
 		setImgHidden("true");
 		cellDragEnd();
 	};
 	const handleTouchCancel = (e) => {
+		e.preventDefault();
 		setImgHidden("true");
 	};
+
+	const handleTouchStartOver = (resetToDefault) => {
+		var resetNumber = numberOfCandiesPerRow;
+		if (resetToDefault) {
+			resetNumber = candiesPerRow;
+
+			localStorage.setItem("totalMoves", parseInt(0));
+			localStorage.setItem("totalScore", parseInt(0));
+		} else {
+			localStorage.setItem("totalMoves", parseInt(totalMoves));
+			localStorage.setItem("totalScore", parseInt(totalScore));
+		}
+		localStorage.setItem("numberOfCandiesPerRow", parseInt(resetNumber));
+		console.log("reset to default:" + resetToDefault);
+		window.location.reload(false);
+	};
+
+	const handleTouchNextLevel = () => {
+		setNumberOfCandiesPerRow((prevCount) => prevCount + 1);
+		numberOfElementsPerRow.current = numberOfElementsPerRow.current + 1;
+		localStorage.setItem(
+			"numberOfCandiesPerRow",
+			parseInt(numberOfCandiesPerRow)
+		);
+		localStorage.setItem("totalMoves", parseInt(totalMoves));
+		localStorage.setItem("totalScore", parseInt(totalScore));
+		window.location.reload(false);
+	};
+
+	const handleTouchStartShowSteps = () => {
+		// Score threshold to trigger point deduction
+		const scoreThreshold = 50;
+		findSoulutions(true);
+		totalScore >= scoreThreshold
+			? setTotalScore((prevScore) => prevScore - scoreThreshold)
+			: setTotalScore(0);
+		setTimeout(function () {
+			findSoulutions(false);
+		}, 1000);
+	};
+
+	useEffect(() => {
+		localStorage.setItem("totalMoves", parseInt(totalMoves));
+		localStorage.setItem("totalScore", parseInt(totalScore));
+		localStorage.setItem(
+			"numberOfCandiesPerRow",
+			parseInt(numberOfCandiesPerRow)
+		);
+	}, [totalMoves]);
+
 	useEffect(() => {
 		toggleLocked();
-		createBoard();
 		window.addEventListener("resize", function (event) {
 			getScreenOrientation();
+			return () => {
+				window.removeEventListener("resize", function (event) {});
+			};
 		});
-
-		var screenWidth = Math.floor(
-			(window.innerWidth - 4) / numberOfCandiesPerRow
-		);
-		setGameArea(screenWidth * numberOfCandiesPerRow);
-
-		const gameDiv = document.getElementById("game");
-		gameDiv.style.width = gameArea;
-		setGameX(gameDiv.getBoundingClientRect().x);
-		setGameY(gameDiv.getBoundingClientRect().y);
-		return () => {
-			window.removeEventListener("resize", function (event) {});
-		};
 	}, []);
+
+	useEffect(() => {
+		createBoard();
+	}, [gameArea]);
 
 	useEffect(() => {
 		const timer = setInterval(() => {
@@ -557,28 +677,45 @@ export default function App() {
 	}, [currentColorArrangement]);
 
 	useEffect(() => {
-		//console.log("useEffect:" + keepSearching);
-
-		const timer = setTimeout(() => {
-			//console.log("timer");
-			//findSoulutions();
-		}, 1000);
-
-		//return () => clearInterval(timer);
+		var isDirty = findSoulutions(false);
+		if (keepSearching) {
+			console.log("useEffect:" + keepSearching + "  - " + isDirty);
+			if (!isDirty) setIsVisible(true);
+		} else setIsVisible(false);
 	}, [keepSearching]);
-	//console.log(currentColorArrangement);
 
 	function getScreenOrientation() {
 		window.location.reload(false);
 	}
-
+	useLockBodyScroll();
 	return (
 		<div className="app">
 			<div id="game" className="game">
+				<div
+					className="graycover"
+					id={`${isVisible ? "" : "hideelement"}`}
+				></div>
+				<div
+					className="dialog"
+					id={`${isVisible ? "" : "hideelement"}`}
+					onClick={() => handleTouchStartOver(false)}
+					onTouchEnd={() => handleTouchStartOver(false)}
+				>
+					No more moves
+					<br />
+					Start over
+				</div>
+				<div
+					className=" dialog nextlevel"
+					id={`${isVisible ? "" : "hideelement"}`}
+					onClick={() => handleTouchNextLevel()}
+					onTouchEnd={() => handleTouchNextLevel()}
+				>
+					Take next level ({numberOfCandiesPerRow + 1})
+				</div>
 				{currentColorArrangement.map((candyColor, idx) => (
 					<img
 						src={candyColor}
-						draggable={true}
 						onDragStart={cellDragStart}
 						onDrop={cellDragDrop}
 						onDragEnd={cellDragEnd}
@@ -593,7 +730,7 @@ export default function App() {
 						height={imgHeight}
 						onTouchStart={(e) => handleTouchStart(e)}
 						onTouchMove={(e) => handleTouchMove(e)}
-						onTouchEnd={() => handleTouchEnd()}
+						onTouchEnd={(e) => handleTouchEnd(e)}
 						onTouchCancel={(e) => handleTouchCancel(e)}
 					/>
 				))}
@@ -626,13 +763,41 @@ export default function App() {
 
 				<div className="scoreboard">
 					<div className="spacer"></div>
-					<div className="scoreboards">Efficency:</div>
+					<div className="scoreboards">Efficiency:</div>
 
 					<div className="scoreboardres">
 						{parseInt((totalScore + 1) / (totalMoves + 1))}
 					</div>
 					<div className="spacer"></div>
 				</div>
+				<div className="scoreboard">
+					<div className="spacer"></div>
+					<div className="scoreboards">Available steps:</div>
+					<button
+						onClick={() => handleTouchStartShowSteps()}
+						onTouchEnd={() => handleTouchStartShowSteps()}
+					>
+						Show
+					</button>
+					<div className="scoreboardres">{totalSolutions}</div>
+					<div className="spacer"></div>
+				</div>
+
+				<div className="scoreboard">
+					<div className="spacer"></div>
+					<div className="scoreboards">Reset Game:</div>
+
+					<div className="scoreboardres"></div>
+					<button
+						onClick={() => handleTouchStartOver(true)}
+						onTouchEnd={() => handleTouchStartOver(true)}
+					>
+						Reset
+					</button>
+					<div className="spacer"></div>
+				</div>
+
+				<div>{txtTemp}</div>
 				<div
 					style={{
 						display: "inline",
@@ -655,7 +820,6 @@ export default function App() {
 						padding: "1px",
 					}}
 				>
-					<br />
 					Developed by Laszlo Elo 2023 - Enjoy
 				</div>
 			</div>
