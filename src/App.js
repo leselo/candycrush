@@ -25,17 +25,24 @@ const emptyCellColor = blank;
 
 export default function App() {
 	useLockBodyScroll();
+	/* localStorage.removeItem("totalMoves");
+	localStorage.removeItem("numberOfCandiesPerRow");
+	localStorage.removeItem("totalScore"); */
+
 	var numberOfCandiesPerRowLoad = parseInt(
 		localStorage.getItem("numberOfCandiesPerRow") || candiesPerRow
 	);
-
 	var totalMovesLoad = parseInt(localStorage.getItem("totalMoves", 0));
 	var totalScoreLoad = parseInt(localStorage.getItem("totalScore", 0));
+
+	isNaN(numberOfCandiesPerRowLoad) &&
+		(numberOfCandiesPerRowLoad = candiesPerRow);
+	isNaN(totalMovesLoad) && (totalMovesLoad = 0);
+	isNaN(totalScoreLoad) && (totalScoreLoad = 0);
 
 	const [numberOfCandiesPerRow, setNumberOfCandiesPerRow] = useState(
 		numberOfCandiesPerRowLoad
 	);
-	//console.log("numberOfCandiesPerRowLoad", numberOfCandiesPerRowLoad);
 
 	const [txtTemp, setTxtTemp] = useState("-");
 	const numberOfElementsPerRow = useRef(candiesPerRow);
@@ -87,8 +94,8 @@ export default function App() {
 		setDraggedImgWidth(imgWidth * 2);
 		setDraggedImgHeight(imgHeight * 2);
 
-		//setTxtTemp(totalScoreLoad);
-		//setTxtTemp(imgWidth + ":" + gameArea + ":" + window.innerWidth + ":");
+		//console.log(">>>", numberOfCandiesPerRow);
+		//setTxtTemp(imgWidth + ":" + gameArea + ":" + numberOfCandiesPerRow + ":");
 
 		const boardColors = [];
 		for (let n = 0; n < width * height; n++) {
@@ -635,7 +642,7 @@ export default function App() {
 		findSoulutions(true);
 		totalScore >= scoreThreshold
 			? setTotalScore((prevScore) => prevScore - scoreThreshold)
-			: setTotalScore(0);
+			: setTotalScore(18);
 		setTimeout(function () {
 			findSoulutions(false);
 		}, 1000);
@@ -661,6 +668,7 @@ export default function App() {
 	}, []);
 
 	useEffect(() => {
+		console.log("gameArea" + gameArea);
 		createBoard();
 	}, [gameArea]);
 
