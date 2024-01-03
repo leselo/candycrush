@@ -25,20 +25,21 @@ const emptyCellColor = blank;
 
 export default function App() {
 	useLockBodyScroll();
-	/* localStorage.removeItem("totalMoves");
-	localStorage.removeItem("numberOfCandiesPerRow");
-	localStorage.removeItem("totalScore"); */
 
 	var numberOfCandiesPerRowLoad = parseInt(
-		localStorage.getItem("numberOfCandiesPerRow") || candiesPerRow
+		localStorage.getItem("numberOfCandiesPerRow")
 	);
-	var totalMovesLoad = parseInt(localStorage.getItem("totalMoves", 0));
-	var totalScoreLoad = parseInt(localStorage.getItem("totalScore", 0));
+	var totalMovesLoad = parseInt(localStorage.getItem("totalMoves"));
+	var totalScoreLoad = parseInt(localStorage.getItem("totalScore"));
 
 	isNaN(numberOfCandiesPerRowLoad) &&
 		(numberOfCandiesPerRowLoad = candiesPerRow);
+	numberOfCandiesPerRowLoad === 0 &&
+		(numberOfCandiesPerRowLoad = candiesPerRow);
 	isNaN(totalMovesLoad) && (totalMovesLoad = 0);
 	isNaN(totalScoreLoad) && (totalScoreLoad = 0);
+
+	console.log("numberOfCandiesPerRowLoad", numberOfCandiesPerRowLoad);
 
 	const [numberOfCandiesPerRow, setNumberOfCandiesPerRow] = useState(
 		numberOfCandiesPerRowLoad
@@ -94,11 +95,11 @@ export default function App() {
 		setDraggedImgWidth(imgWidth * 2);
 		setDraggedImgHeight(imgHeight * 2);
 
-		//console.log(">>>", numberOfCandiesPerRow);
-		//setTxtTemp(imgWidth + ":" + gameArea + ":" + numberOfCandiesPerRow + ":");
+		console.log(">>>", numberOfCandiesPerRow);
 
 		const boardColors = [];
 		for (let n = 0; n < width * height; n++) {
+			//This is only for prearranging the board
 			/* if (n === 56 || n === 57 || n === 59 || n === 60 || n === 50) {
 				boardColors.push(candyColors[3]);
 			} else if (n === 123 || n === 124 || n === 125) {
@@ -207,12 +208,10 @@ export default function App() {
 		for (let cellID = 0; cellID < currentColorArrangement.length; cellID++) {
 			document.getElementById(cellID).style.opacity = 1;
 			document.getElementById(cellID).style.background = "white";
-			//console.log("find Clue");
 
 			const candyColorToMatch = currentColorArrangement[cellID];
 			if (cellID % width === 0) rightEdge = cellID + width - 1;
 			leftEdge = rightEdge - width + 1;
-			//console.log(leftEdge, "rightEdge", rightEdge);
 
 			if (
 				debugShowHorizontal &&
@@ -434,8 +433,6 @@ export default function App() {
 				return true;
 			});
 		}
-
-		//console.log("solutions:" + solutions);
 
 		setTotalSolutions(solutions);
 		return isDirty;
