@@ -45,7 +45,7 @@ export default function App() {
 		numberOfCandiesPerRowLoad
 	);
 
-	const [txtTemp, setTxtTemp] = useState("-");
+	const [txtTemp, setTxtTemp] = useState(numberOfCandiesPerRowLoad);
 	const numberOfElementsPerRow = useRef(candiesPerRow);
 	const [gameArea, setGameArea] = useState(360);
 	const [currentColorArrangement, setCurrentColorArrangement] = useState([]);
@@ -622,14 +622,12 @@ export default function App() {
 	};
 
 	const handleTouchNextLevel = () => {
-		setNumberOfCandiesPerRow((prevCount) => prevCount + 1);
-		numberOfElementsPerRow.current = numberOfElementsPerRow.current + 1;
 		localStorage.setItem(
 			"numberOfCandiesPerRow",
-			parseInt(numberOfCandiesPerRow)
+			parseInt(numberOfCandiesPerRow + 1)
 		);
-		localStorage.setItem("totalMoves", parseInt(totalMoves));
-		localStorage.setItem("totalScore", parseInt(totalScore));
+		localStorage.setItem("totalMoves", totalMoves);
+		localStorage.setItem("totalScore", totalScore);
 		window.location.reload(false);
 	};
 
@@ -790,7 +788,7 @@ export default function App() {
 
 				<div className="scoreboard">
 					<div className="spacer"></div>
-					<div className="scoreboards">Reset Game:</div>
+					<div className="scoreboards">Reset Game:{txtTemp}</div>
 
 					<div className="scoreboardres"></div>
 					<button
